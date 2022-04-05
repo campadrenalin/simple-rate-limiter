@@ -77,10 +77,15 @@ class RateLimiter(object):
         least_recent_event = self.buffer[self.read_pos]
         return least_recent_event >= threshold
 
-    def __enter__(self):
-        if self.is_exceeded():
+    def check(self, current_time=None):
+        "Raise exception if rate is exceeded, otherwise record new event."
+        current_time = current_time or perf_counter()
+        if self.is_exceeded(current_time):
             raise LimitExceeded(self.budget, self.window)
-        self.record()
+        self.record(current_time)
+
+    def __enter__(self):
+        self.check()
 
     def __exit__(self, *exc_data):
         pass
