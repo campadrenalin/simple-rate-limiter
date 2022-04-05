@@ -61,3 +61,27 @@ def test_is_exceeded(budget, window, events, current_time, exceeded):
         rl.record(event)
     
     assert rl.is_exceeded(current_time) == exceeded
+
+def test_is_exceeded_default():
+    rl = rate_limit.RateLimiter(3, 15*60)
+    rl.record()
+    assert rl.is_exceeded() == False
+    rl.record()
+    assert rl.is_exceeded() == False
+    rl.record()
+    assert rl.is_exceeded() == True
+
+def test_as_contextmanager():
+    rl = rate_limit.RateLimiter(2, 10.0)
+    with rl:
+        assert rl.write_pos == 1
+    with rl:
+        assert rl.write_pos == 0
+
+    did_not_run_body = True
+    with pytest.raises(rate_limit.LimitExceeded):
+        with rl:
+            did_not_run_body = False
+
+    assert did_not_run_body
+    assert rl.write_pos == 0
